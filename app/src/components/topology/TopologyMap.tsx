@@ -494,6 +494,12 @@ function ChipTooltip({
           />
           <MiniStat label={t('topology.traffic')} value={`${d.trafficMbps >= 1 ? fmtEs(d.trafficMbps, 1) : fmtEs(d.trafficMbps, 2)} Mbps`} />
         </div>
+        {!chip.wired && (d.linkTxMbps || d.linkRxMbps) ? (
+          <MiniStat
+            label={t('topology.linkRate')}
+            value={`↓ ${d.linkTxMbps ? fmtEs(d.linkTxMbps, d.linkTxMbps % 1 ? 1 : 0) : '—'} · ↑ ${d.linkRxMbps ? fmtEs(d.linkRxMbps, d.linkRxMbps % 1 ? 1 : 0) : '—'} Mbps`}
+          />
+        ) : null}
         {chip.vlan && (
           <MiniStat
             label={t('topology.vlan')}

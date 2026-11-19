@@ -1688,7 +1688,8 @@
       "untagged": "Sin VLAN",
       "aps": "Puntos de acceso",
       "vpn": "VPN"
-    }
+    },
+    "linkRate": "Velocidad de enlace"
   },
   "settings": {
     "admin": {

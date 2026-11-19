@@ -352,9 +352,13 @@ type Device struct {
 	// cliente inalambrico. El agente los declara desde iw; vacios cuando la
 	// fuente no los expone. La topologia cruza WifiIface con el bridge VLAN
 	// filtering del router para etiquetar la VLAN de la estacion.
-	WifiIface   string    `json:"wifiIface,omitempty"`
-	SSID        string    `json:"ssid,omitempty"`
-	SignalDbm   *int      `json:"signalDbm"`
+	WifiIface string `json:"wifiIface,omitempty"`
+	SSID      string `json:"ssid,omitempty"`
+	SignalDbm *int   `json:"signalDbm"`
+	// LinkTxMbps/LinkRxMbps: negotiated Wi-Fi link rate of a wireless client
+	// (AP to client / client to AP), when its AP reports it. 0 = unknown.
+	LinkTxMbps  float64   `json:"linkTxMbps,omitempty"`
+	LinkRxMbps  float64   `json:"linkRxMbps,omitempty"`
 	TrafficMbps float64   `json:"trafficMbps"`
 	Online      bool      `json:"online"`
 	Sparkline   []float64 `json:"sparkline"`

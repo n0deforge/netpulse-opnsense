@@ -3543,6 +3543,8 @@ func (l *Live) buildDevices(polled map[string]*routerPolled, wanPort string) []D
 		wifiIface string
 		ssid      string
 		signal    *int
+		txRate    float64
+		rxRate    float64
 	}
 	seen := map[string]seenInfo{}
 	// assocSeen (#1740): en qué routers vio ESTE ciclo a cada MAC. Solo se usa
@@ -3553,7 +3555,7 @@ func (l *Live) buildDevices(polled map[string]*routerPolled, wanPort string) []D
 	for routerID, p := range polled {
 		for mac, w := range p.wireless {
 			sig := w.SignalDbm
-			seen[mac] = seenInfo{routerID: routerID, band: w.Band, wifiIface: w.Iface, ssid: w.SSID, signal: &sig}
+			seen[mac] = seenInfo{routerID: routerID, band: w.Band, wifiIface: w.Iface, ssid: w.SSID, signal: &sig, txRate: w.TxRateMbps, rxRate: w.RxRateMbps}
 			assocSeen[mac] = append(assocSeen[mac], seenInfo{routerID: routerID, band: w.Band, wifiIface: w.Iface, ssid: w.SSID, signal: &sig})
 			if l.db != nil {
 				_, _ = l.db.Exec(
@@ -4082,6 +4084,8 @@ func (l *Live) buildDevices(polled map[string]*routerPolled, wanPort string) []D
 			d.WifiIface = s.wifiIface
 			d.SSID = s.ssid
 			d.SignalDbm = s.signal
+			d.LinkTxMbps = s.txRate
+			d.LinkRxMbps = s.rxRate
 		} else if k, ok := known[mac]; ok {
 			d.RouterID = k.routerID
 			d.Band = k.band

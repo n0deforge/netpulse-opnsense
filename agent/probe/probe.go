@@ -376,6 +376,11 @@ type WirelessClient struct {
 	// los expone (wl, iwinfo, drivers sin esa salida): el campo es opcional.
 	Iface string `json:"iface,omitempty"`
 	SSID  string `json:"ssid,omitempty"`
+	// TxRateMbps/RxRateMbps: negotiated Wi-Fi link (PHY) rate towards and
+	// from the station, in Mbps, as the AP reports it. Not throughput.
+	// 0/omitted = the source does not report it.
+	TxRateMbps float64 `json:"txRateMbps,omitempty"`
+	RxRateMbps float64 `json:"rxRateMbps,omitempty"`
 }
 
 // PortState es {name, up, speed} de una interfaz (/sys operstate+speed).

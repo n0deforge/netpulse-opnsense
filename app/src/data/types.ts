@@ -292,6 +292,9 @@ export interface Device {
   band: Band
   /** dBm; null si va por cable */
   signalDbm: number | null
+  /** Negotiated Wi-Fi link rate, AP to client / client to AP (Mbps); absent when unknown. */
+  linkTxMbps?: number
+  linkRxMbps?: number
   /** Tráfico actual Mbps */
   trafficMbps: number
   online: boolean

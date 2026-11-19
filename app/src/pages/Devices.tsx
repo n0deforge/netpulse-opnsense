@@ -1099,6 +1099,7 @@ function BandChip({ band }: { band: ClientDevice['band'] }) {
 }
 
 function SignalCell({ device }: { device: ClientDevice }) {
+  const { t } = useTranslation()
   if (!device.online) return <span className="font-mono text-mono-sm text-text-muted">—</span>
   return (
     <span className="inline-flex items-center gap-1.5 2xl:whitespace-nowrap">
@@ -1108,6 +1109,11 @@ function SignalCell({ device }: { device: ClientDevice }) {
           {device.signalDbm} dBm
         </span>
       )}
+      {device.linkTxMbps ? (
+        <span className="font-mono text-caption text-text-muted" title={t('topology.linkRate')}>
+          · {Math.round(device.linkTxMbps)} Mbps
+        </span>
+      ) : null}
     </span>
   )
 }

@@ -1728,7 +1728,8 @@
       "untagged": "Без VLAN",
       "aps": "Точки доступа",
       "vpn": "VPN"
-    }
+    },
+    "linkRate": "Скорость канала"
   },
   "settings": {
     "admin": {
