@@ -7,6 +7,7 @@
  * tooltips y coordinación hover con la tabla de enlaces.
  */
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { isVirtualDevice, isVirtualRouter } from './views'
 import type { PointerEvent as ReactPointerEvent, RefObject } from 'react'
 import { useNavigate } from 'react-router'
 import { animate, motion, useReducedMotion } from 'framer-motion'
@@ -135,11 +136,12 @@ type TooltipState = TooltipData & { left: number; top: number; below: boolean }
 function tooltipNavTarget(tip: TooltipData, tagging: boolean): string | null {
   switch (tip.kind) {
     case 'router':
-      return `/routers/${tip.id}`
+      // Tunnel hubs are virtual: no router page behind them.
+      return isVirtualRouter(tip.router) ? null : `/routers/${tip.id}`
     case 'chip':
       // Un chip con etiquetado abre el panel y un CT anidado no tiene página
       // propia: en ambos casos no hay "detail" que enseñar.
-      if (tagging || tip.chip.isCt) return null
+      if (tagging || tip.chip.isCt || isVirtualDevice(tip.chip.device)) return null
       return `/devices?q=${encodeURIComponent(tip.chip.device.mac ?? tip.chip.device.name)}`
     default:
       return null
@@ -1331,7 +1333,7 @@ export function TopologyMap({
                 nodeClick(
                   e,
                   { kind: 'router', id: node.id, router: node.router, x: node.x, y: node.y - node.r - 10 },
-                  `/routers/${node.id}`,
+                  isVirtualRouter(node.router) ? undefined : `/routers/${node.id}`,
                 )
               }
               onKeyDown={(e) => {
@@ -1339,7 +1341,7 @@ export function TopologyMap({
                   e.preventDefault()
                   handleNodeClick(
                     { kind: 'router', id: node.id, router: node.router, x: node.x, y: node.y - node.r - 10 },
-                    `/routers/${node.id}`,
+                    isVirtualRouter(node.router) ? undefined : `/routers/${node.id}`,
                   )
                 }
               }}

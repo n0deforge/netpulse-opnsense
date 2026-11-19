@@ -17,8 +17,8 @@ import type { TopologyMapApi } from '@/components/topology/TopologyMap'
 import { TopologyOverridesManager } from '@/components/topology/TopologyOverridesManager'
 import { buildTopologyModel } from '@/components/topology/model'
 import { TopologyViewBar } from '@/components/topology/TopologyViewBar'
-import { TunnelMap, TunnelTable } from '@/components/topology/TunnelMap'
-import { applyTopologyView, gatewayOf, parseViewKey, routerTabs, tunnelsOf, viewKey, type TopologyView } from '@/components/topology/views'
+import { TunnelTable } from '@/components/topology/TunnelTable'
+import { applyTopologyView, gatewayOf, parseViewKey, peerKey, routerTabs, tunnelsOf, viewKey, type TopologyView } from '@/components/topology/views'
 import { fetchJson } from '@/lib/utils'
 import { useNetPulse } from '@/data/DataProvider'
 import { useAuth } from '@/data/AuthContext'
@@ -90,6 +90,38 @@ export default function Topology() {
       ? { kind: 'live' }
       : viewRaw
   const tunnelPeers = view.kind === 'tunnel' ? wireguard.peers.filter((p) => p.interface === view.iface) : []
+
+  // Peer rates for the tunnel map: the server sends cumulative bytes per
+  // peer, the rate is the delta between two snapshots (Mbps). A counter that
+  // goes backwards (tunnel restart) restarts the baseline.
+  const peerSamples = useRef<Record<string, { rx: number; tx: number; t: number }>>({})
+  const [peerRates, setPeerRates] = useState<Record<string, number>>({})
+  useEffect(() => {
+    const now = Date.now()
+    const next: Record<string, number> = {}
+    const samples: Record<string, { rx: number; tx: number; t: number }> = {}
+    for (const p of wireguard.peers) {
+      if (p.rxBytes === undefined && p.txBytes === undefined) continue
+      const k = peerKey(p)
+      const cur = { rx: p.rxBytes ?? 0, tx: p.txBytes ?? 0, t: now }
+      const prev = peerSamples.current[k]
+      if (prev && cur.t > prev.t && cur.rx >= prev.rx && cur.tx >= prev.tx) {
+        const changed = cur.rx !== prev.rx || cur.tx !== prev.tx
+        // Same counters as last time: keep the previous sample as baseline so
+        // the rate spans the real interval until the server refreshes them.
+        if (!changed) {
+          samples[k] = prev
+          next[k] = peerRates[k] ?? 0
+          continue
+        }
+        next[k] = ((cur.rx - prev.rx + (cur.tx - prev.tx)) * 8) / ((cur.t - prev.t) / 1000) / 1e6
+      }
+      samples[k] = cur
+    }
+    peerSamples.current = samples
+    setPeerRates(next)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [wireguard])
   const gatewayId = gatewayOf(routers)?.id
   const [vlanNames, setVlanNames] = useState<Record<number, string>>({})
   useEffect(() => {
@@ -108,11 +140,11 @@ export default function Topology() {
 
   // Etiquetado manual (issue #142 Fase B): clic en un chip abre el panel de
   // overrides con esa MAC preseleccionada. Solo admin y modo live.
-  const canTag = !isDemo && auth?.role === 'admin'
+  const canTag = !isDemo && auth?.role === 'admin' && view.kind !== 'tunnel'
   // Editar layout (issue #656): solo admin y modo live, como "Etiquetar".
-  // Layout edits are saved per node for the whole map, so they are only
-  // offered in the live view (a narrowed view would move nodes out of place).
-  const canEdit = !isDemo && auth?.role === 'admin' && view.kind === 'live'
+  // Layout edits are saved per node, so a node moved in any view keeps its
+  // place in every view (tunnel hubs and peers have their own ids).
+  const canEdit = !isDemo && auth?.role === 'admin'
   const [tagSheetOpen, setTagSheetOpen] = useState(false)
   const [tagMac, setTagMac] = useState<string | undefined>(undefined)
 
@@ -137,9 +169,9 @@ export default function Topology() {
   })
 
   const scoped = useMemo(
-    () => applyTopologyView({ routers, devices, wireguard, distributionNodes: distributionNodes ?? [], topology }, view),
+    () => applyTopologyView({ routers, devices, wireguard, distributionNodes: distributionNodes ?? [], topology, peerRates }, view),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [routers, devices, wireguard, distributionNodes, topology, viewKey(view)],
+    [routers, devices, wireguard, distributionNodes, topology, peerRates, viewKey(view)],
   )
 
   const handleViewChange = (v: TopologyView) => {
@@ -382,9 +414,6 @@ export default function Topology() {
         aria-label={t('topology.interactiveMap')}
       >
         <div className="mesh-bg pointer-events-none absolute inset-0 overflow-hidden rounded-2xl" aria-hidden />
-        {view.kind === 'tunnel' ? (
-          <TunnelMap iface={view.iface} peers={tunnelPeers} gatewayName={gatewayOf(routers)?.name ?? ''} />
-        ) : (
         <TopologyMap
           model={model}
           apiRef={mapApi}
@@ -396,7 +425,6 @@ export default function Topology() {
           editMode={canEdit && editMode}
           onMoveNode={canEdit && editMode ? handleMoveNode : undefined}
         />
-        )}
         {/* Aviso de modo edición (issue #656): recordatorio visible de que los
             nodos son arrastrables mientras se edita el layout. */}
         {canEdit && editMode && (
@@ -419,11 +447,9 @@ export default function Topology() {
             overflow-hidden porque recortaría los tooltips (#88). Sin este
             recorte, el sheet cerrado (trasladado y:236) cuelga por debajo del
             mapa y tapa la tabla de enlaces (#183). */}
-        {view.kind !== 'tunnel' && (
-          <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-2xl">
-            <LegendSheet model={model} />
-          </div>
-        )}
+        <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-2xl">
+          <LegendSheet model={model} />
+        </div>
       </section>
 
 
@@ -431,16 +457,13 @@ export default function Topology() {
       {/* ③ + ④ Leyenda y enlaces (#1384): ambas a todo lo ancho, apiladas;
           la leyenda va en una sola fila de columnas (desktop; en móvil solo
           la lista de enlaces, la leyenda vive en el sheet del mapa). */}
-      {view.kind === 'tunnel' ? (
-        <TunnelTable iface={view.iface} peers={tunnelPeers} />
-      ) : (
-        <div className="grid grid-cols-1 gap-4 md:gap-5">
-          <div className="hidden lg:block">
-            <LegendCard model={model} />
-          </div>
-          <LinksTable model={model} hoverLink={hoverLink} onHoverLink={setHoverLink} />
+      <div className="grid grid-cols-1 gap-4 md:gap-5">
+        {view.kind === 'tunnel' && <TunnelTable iface={view.iface} peers={tunnelPeers} />}
+        <div className="hidden lg:block">
+          <LegendCard model={model} />
         </div>
-      )}
+        <LinksTable model={model} hoverLink={hoverLink} onHoverLink={setHoverLink} />
+      </div>
 
       {/* Etiquetado manual de hardware (issue #142 Fase B): clic en un chip
           abre este panel con la MAC preseleccionada; también se abre desde el

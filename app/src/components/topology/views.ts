@@ -8,7 +8,7 @@
  * Geometry, animation, tooltips and layout editing stay exactly as in the
  * live view.
  */
-import type { Device, DistributionNode, Router, TopoSemantics, WireGuardStats } from '@/data/mock'
+import type { Device, DeviceType, DistributionNode, Router, TopoSemantics, WGPeer, WireGuardStats } from '@/data/mock'
 
 export type TopologyView =
   | { kind: 'live' }
@@ -84,6 +84,81 @@ export interface ViewInput {
   wireguard: WireGuardStats
   distributionNodes: DistributionNode[]
   topology?: TopoSemantics
+  /** Peer key → current rate in Mbps (tunnel views; see usePeerRates). */
+  peerRates?: Record<string, number>
+}
+
+// -- tunnel views -------------------------------------------------------------
+// A tunnel is drawn with the same map as the fleet: a hub node for the tunnel
+// hangs off the gateway and every reachable peer is a client in its ring. The
+// hub and peers are virtual (no router or device page); TopologyMap checks
+// isVirtualRouter / isVirtualDevice to skip navigation and tagging.
+
+export const tunnelHubId = (iface: string) => `tunnel:${iface}`
+export const isVirtualRouter = (r: Pick<Router, 'id'>) => r.id.startsWith('tunnel:')
+export const isVirtualDevice = (d: Pick<Device, 'id'>) => d.id.startsWith('peer:')
+
+export const peerKey = (p: WGPeer) => p.key || p.id
+
+function osType(os: string | undefined): DeviceType {
+  const o = (os ?? '').toLowerCase()
+  if (o === 'ios' || o === 'android') return 'movil'
+  if (o === 'ipados') return 'tablet'
+  if (o === 'tvos') return 'tv'
+  if (o === 'linux' || o === 'freebsd' || o === 'openbsd') return 'servidor'
+  if (o === 'macos' || o === 'windows') return 'ordenador'
+  return 'desconocido'
+}
+
+function tunnelView(input: ViewInput, iface: string): ViewInput {
+  const gw = gatewayOf(input.routers)
+  const peers = input.wireguard.peers.filter((p) => p.interface === iface)
+  const reachable = peers.filter((p) => p.active || p.online)
+  const hubId = tunnelHubId(iface)
+  const ts = isTailscale(iface)
+  const hub: Router = {
+    id: hubId,
+    name: ts ? 'Tailscale' : iface,
+    model: ts ? 'Tailscale' : 'WireGuard',
+    modelShort: ts ? 'Tailscale' : 'WireGuard',
+    role: 'VPN',
+    roleBadge: 'EXT',
+    type: 'tunnel',
+    ip: '',
+    status: reachable.length > 0 ? 'online' : 'offline',
+    health: 100,
+    cpu: null,
+    ram: null,
+    temp: null,
+    uptime: '—',
+    clients: reachable.length,
+    sparkline: [],
+    backhaul: 'cable',
+    vitalsAvailable: false,
+  } as Router
+  const devices: Device[] = peers.map((p) => ({
+    id: `peer:${peerKey(p)}`,
+    name: p.name,
+    type: osType(p.os),
+    manufacturer: p.os || (ts ? 'Tailscale' : 'WireGuard'),
+    ip: p.tunnelIp,
+    mac: '',
+    routerId: hubId,
+    band: 'cable',
+    signalDbm: null,
+    trafficMbps: input.peerRates?.[peerKey(p)] ?? 0,
+    online: p.active || !!p.online,
+    sparkline: [],
+  }))
+  return {
+    routers: gw ? [gw, hub] : [hub],
+    devices,
+    wireguard: { ...input.wireguard, peers: [] },
+    distributionNodes: [],
+    // No server semantics for virtual nodes: the model's local layout places
+    // the hub around the gateway and its peers in the hub's ring.
+    topology: undefined,
+  }
 }
 
 function deviceFilter(view: TopologyView): ((d: Device) => boolean) | null {
@@ -102,6 +177,7 @@ function deviceFilter(view: TopologyView): ((d: Device) => boolean) | null {
 }
 
 export function applyTopologyView(input: ViewInput, view: TopologyView): ViewInput {
+  if (view.kind === 'tunnel') return tunnelView(input, view.iface)
   const keep = deviceFilter(view)
   if (!keep) return input
 

@@ -220,6 +220,11 @@ export interface WGPeer {
   endpoint?: string
   /** Control-plane presence (Tailscale); absent for plain WireGuard. */
   online?: boolean
+  /** OS the peer reports (Tailscale), for the device icon. */
+  os?: string
+  /** Cumulative bytes; absent when the server has no counters. */
+  rxBytes?: number
+  txBytes?: number
 }
 
 export interface WireGuardStats {
