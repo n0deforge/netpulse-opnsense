@@ -145,8 +145,12 @@ The image reports its version as `<upstream base>+n0de.X.Y.Z` (for example
 `2.53.0+n0de.0.1.1`). Build metadata does not count for version precedence, so
 the built-in update check only flags a real upstream release.
 
-Fork tags never use the plain `v*` prefix, so the upstream release, OpenWrt
-package and Docker workflows do not fire on this repository.
+Upstream's publishing workflows (`release`, `docker`, `openwrt-package`,
+`dist`, `go`) are disabled in this repository's Actions settings rather than
+edited, so upstream syncs never conflict on them and a "Sync fork" or a
+GitHub Release here publishes nothing upstream-shaped. `pr-checks`,
+`gitleaks` and `fork-image` stay enabled. Fork tags also avoid the plain `v*`
+prefix as a second guard.
 
 ## Upstream status
 
