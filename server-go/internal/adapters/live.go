@@ -3223,7 +3223,23 @@ func (l *Live) pollWireGuard(devices []Device) *WireGuardStats {
 	// tener el mutex tomado durante el sondeo SSH.
 	l.mu.Lock()
 	urgent := l.wgUrgentCopyLocked()
+	reg := l.agents
+	macs := make(map[string]string, len(l.routerMacs))
+	for k, v := range l.routerMacs {
+		macs[k] = v
+	}
 	l.mu.Unlock()
+	// A gateway that pushes its own WireGuard section (OPNsense via its API)
+	// is read from the payload instead of SSH.
+	if reg != nil {
+		if _, p, fresh := reg.MatchRouter(*gw, macs); fresh && p != nil && p.Data.WireGuard != nil {
+			stats := WireGuardStatsFromPayload(p.Data.WireGuard, peerNames, urgent, time.Now().Unix())
+			stats.RouterID = gw.ID
+			l.applyWireGuardTransitions(stats, gw.ID)
+			l.pruneWGUrgent(stats.Peers)
+			return stats
+		}
+	}
 	stats, err := GetWireGuardStats(l.pool, gw.SSHAddr(), l.cfg.WGInterface, "", peerNames, urgent)
 	if err != nil {
 		log.Printf("[netpulse] WireGuard unavailable: %v", err)

@@ -90,6 +90,31 @@ type PayloadData struct {
 	// Read-only here. nil = this router reports no multi-WAN, which is also
 	// what an older agent sends.
 	MultiWan *MultiWanInfo `json:"multiWan,omitempty"`
+	// WireGuard: tunnel peers as the unit itself reports them, for gateways
+	// the server cannot SSH into (an OPNsense firewall read through its API).
+	// nil = not reported (the server falls back to its SSH probe); a non-nil
+	// section with no peers = WireGuard answered and has no peers.
+	WireGuard *WireGuardData `json:"wireguard,omitempty"`
+}
+
+// WireGuardData: the peers of every WireGuard interface on the unit.
+type WireGuardData struct {
+	Interfaces []string        `json:"interfaces"`
+	Peers      []WireGuardPeer `json:"peers"`
+}
+
+// WireGuardPeer mirrors one row of `wg show <if> dump` plus the peer's
+// configured name. Counters are cumulative bytes; handshake is Unix seconds
+// (0 = never).
+type WireGuardPeer struct {
+	Interface     string `json:"interface,omitempty"`
+	PublicKey     string `json:"publicKey"`
+	Name          string `json:"name,omitempty"`
+	Endpoint      string `json:"endpoint,omitempty"`
+	AllowedIPs    string `json:"allowedIps,omitempty"`
+	LastHandshake int64  `json:"lastHandshake"`
+	RxBytes       int64  `json:"rxBytes"`
+	TxBytes       int64  `json:"txBytes"`
 }
 
 // MQTTData: exposición propia del equipo a Home Assistant por MQTT (#832).
