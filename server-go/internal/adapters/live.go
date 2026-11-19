@@ -4092,6 +4092,7 @@ func (l *Live) buildDevices(polled map[string]*routerPolled, wanPort string) []D
 			}
 		}
 	}
+	fillVlanFromGateway(devices, polled, gwID)
 	// Give clients learned only in an SNMP switch's FDB a traffic figure from
 	// that port's counters (see switchporttraffic.go).
 	l.applySnmpSwitchPortTraffic(polled, devices)
