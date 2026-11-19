@@ -130,10 +130,13 @@ Each WireGuard peer the server returns now carries three optional fields:
 probe fills `interface` and `endpoint` too, so OpenWrt gateways benefit.
 
 The view bar uses them for a **VPN** group with one tab per tunnel
-interface; `tailscale0` is labelled Tailscale. A tunnel tab replaces the
-fleet map with a hub-and-spoke map of every peer around the gateway, plus a
-peer table, because the live map only has four peer slots and a tailnet
-usually has more devices. Each peer is shown as:
+interface; `tailscale0` is labelled Tailscale. A tunnel tab is drawn by the
+same map as every other view: the tunnel is a hub node hanging off the
+gateway and every reachable peer is a client in its ring, with an icon from
+the OS the peer reports, tooltips, packet flow proportional to its rate
+(derived from the byte counters between snapshots) and drag-to-move layout.
+The hub and its peers are virtual, so they do not link to router or device
+pages. A peer table below the map lists every peer, offline ones included:
 
 | Status | Meaning |
 |---|---|
@@ -142,8 +145,10 @@ usually has more devices. Each peer is shown as:
 | Offline | Neither |
 
 The table adds the tunnel IP, last handshake, whether the link is direct
-(with its endpoint) or relayed, and transfer. Tailscale peers come from the
-OPNsense os-tailscale plugin through the OPNsense pusher.
+(with its endpoint) or relayed, and transfer. On the fleet map, a tailnet
+peer that is online but idle is drawn as up, since it is reachable. Peers
+also expose `os`, `rxBytes` and `txBytes` in the API. Tailscale peers come
+from the OPNsense os-tailscale plugin through the OPNsense pusher.
 
 ## Running this fork
 
