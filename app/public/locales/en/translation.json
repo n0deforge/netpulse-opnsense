@@ -1606,7 +1606,21 @@
     "showLabels": "Show labels",
     "subtitle": "Live view of your network",
     "tapAgainDetail": "Tap again to view detail →",
-    "tunnel": "Tunnel",
+    "tunnel": {
+      "empty": "No peers on this tunnel.",
+      "mapAria": "Tunnel map of {{name}}",
+      "active": "Active",
+      "online": "Online, idle",
+      "offline": "Offline",
+      "handshake": "Last handshake",
+      "direct": "Direct",
+      "relayed": "Relayed",
+      "peer": "Peer",
+      "status": "Status",
+      "link": "Link",
+      "peers_one": "{{count}} peer",
+      "peers_other": "{{count}} peers"
+    },
     "weakSignal": "Weak signal",
     "zoomControls": "Map zoom controls",
     "tagDevices": "Tag clients",
@@ -1672,7 +1686,8 @@
       "wifi": "Wi-Fi",
       "vlan": "VLAN",
       "untagged": "No VLAN",
-      "aps": "Access points"
+      "aps": "Access points",
+      "vpn": "VPN"
     }
   },
   "settings": {

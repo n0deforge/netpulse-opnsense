@@ -270,7 +270,20 @@
     "showLabels": "显示标签",
     "subtitle": "你的网络实时视图",
     "tapAgainDetail": "再次点击查看设备详情 →",
-    "tunnel": "隧道",
+    "tunnel": {
+      "empty": "此隧道没有对端。",
+      "mapAria": "{{name}} 隧道图",
+      "active": "活跃",
+      "online": "在线，空闲",
+      "offline": "离线",
+      "handshake": "最近握手",
+      "direct": "直连",
+      "relayed": "中继",
+      "peer": "对端",
+      "status": "状态",
+      "link": "链路",
+      "peers_other": "{{count}} 个对端"
+    },
     "weakSignal": "信号弱",
     "zoomControls": "地图缩放控件",
     "tagDevices": "标记客户端",
@@ -336,7 +349,8 @@
       "wifi": "Wi-Fi",
       "vlan": "VLAN",
       "untagged": "无 VLAN",
-      "aps": "接入点"
+      "aps": "接入点",
+      "vpn": "VPN"
     }
   },
   "devices": {

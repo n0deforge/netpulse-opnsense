@@ -17,7 +17,8 @@ import type { TopologyMapApi } from '@/components/topology/TopologyMap'
 import { TopologyOverridesManager } from '@/components/topology/TopologyOverridesManager'
 import { buildTopologyModel } from '@/components/topology/model'
 import { TopologyViewBar } from '@/components/topology/TopologyViewBar'
-import { applyTopologyView, gatewayOf, parseViewKey, routerTabs, viewKey, type TopologyView } from '@/components/topology/views'
+import { TunnelMap, TunnelTable } from '@/components/topology/TunnelMap'
+import { applyTopologyView, gatewayOf, parseViewKey, routerTabs, tunnelsOf, viewKey, type TopologyView } from '@/components/topology/views'
 import { fetchJson } from '@/lib/utils'
 import { useNetPulse } from '@/data/DataProvider'
 import { useAuth } from '@/data/AuthContext'
@@ -84,7 +85,11 @@ export default function Topology() {
     }
   })
   const view: TopologyView =
-    viewRaw.kind === 'router' && !routerTabs(routers).some((r) => r.id === viewRaw.id) ? { kind: 'live' } : viewRaw
+    (viewRaw.kind === 'router' && !routerTabs(routers).some((r) => r.id === viewRaw.id)) ||
+    (viewRaw.kind === 'tunnel' && !tunnelsOf(wireguard).includes(viewRaw.iface))
+      ? { kind: 'live' }
+      : viewRaw
+  const tunnelPeers = view.kind === 'tunnel' ? wireguard.peers.filter((p) => p.interface === view.iface) : []
   const gatewayId = gatewayOf(routers)?.id
   const [vlanNames, setVlanNames] = useState<Record<number, string>>({})
   useEffect(() => {
@@ -362,7 +367,14 @@ export default function Topology() {
         </div>
       </header>
 
-      <TopologyViewBar view={view} onChange={handleViewChange} routers={routers} devices={devices} vlanNames={vlanNames} />
+      <TopologyViewBar
+        view={view}
+        onChange={handleViewChange}
+        routers={routers}
+        devices={devices}
+        wireguard={wireguard}
+        vlanNames={vlanNames}
+      />
 
       {/* ② Map canvas */}
       <section
@@ -370,6 +382,9 @@ export default function Topology() {
         aria-label={t('topology.interactiveMap')}
       >
         <div className="mesh-bg pointer-events-none absolute inset-0 overflow-hidden rounded-2xl" aria-hidden />
+        {view.kind === 'tunnel' ? (
+          <TunnelMap iface={view.iface} peers={tunnelPeers} gatewayName={gatewayOf(routers)?.name ?? ''} />
+        ) : (
         <TopologyMap
           model={model}
           apiRef={mapApi}
@@ -381,6 +396,7 @@ export default function Topology() {
           editMode={canEdit && editMode}
           onMoveNode={canEdit && editMode ? handleMoveNode : undefined}
         />
+        )}
         {/* Aviso de modo edición (issue #656): recordatorio visible de que los
             nodos son arrastrables mientras se edita el layout. */}
         {canEdit && editMode && (
@@ -403,9 +419,11 @@ export default function Topology() {
             overflow-hidden porque recortaría los tooltips (#88). Sin este
             recorte, el sheet cerrado (trasladado y:236) cuelga por debajo del
             mapa y tapa la tabla de enlaces (#183). */}
-        <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-2xl">
-          <LegendSheet model={model} />
-        </div>
+        {view.kind !== 'tunnel' && (
+          <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-2xl">
+            <LegendSheet model={model} />
+          </div>
+        )}
       </section>
 
 
@@ -413,12 +431,16 @@ export default function Topology() {
       {/* ③ + ④ Leyenda y enlaces (#1384): ambas a todo lo ancho, apiladas;
           la leyenda va en una sola fila de columnas (desktop; en móvil solo
           la lista de enlaces, la leyenda vive en el sheet del mapa). */}
-      <div className="grid grid-cols-1 gap-4 md:gap-5">
-        <div className="hidden lg:block">
-          <LegendCard model={model} />
+      {view.kind === 'tunnel' ? (
+        <TunnelTable iface={view.iface} peers={tunnelPeers} />
+      ) : (
+        <div className="grid grid-cols-1 gap-4 md:gap-5">
+          <div className="hidden lg:block">
+            <LegendCard model={model} />
+          </div>
+          <LinksTable model={model} hoverLink={hoverLink} onHoverLink={setHoverLink} />
         </div>
-        <LinksTable model={model} hoverLink={hoverLink} onHoverLink={setHoverLink} />
-      </div>
+      )}
 
       {/* Etiquetado manual de hardware (issue #142 Fase B): clic en un chip
           abre este panel con la MAC preseleccionada; también se abre desde el

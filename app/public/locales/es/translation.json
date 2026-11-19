@@ -1606,7 +1606,21 @@
     "showLabels": "Mostrar etiquetas",
     "subtitle": "Vista en vivo de tu red",
     "tapAgainDetail": "Toca de nuevo para ver el detalle →",
-    "tunnel": "Túnel",
+    "tunnel": {
+      "empty": "Este túnel no tiene peers.",
+      "mapAria": "Mapa del túnel {{name}}",
+      "active": "Activo",
+      "online": "En línea, inactivo",
+      "offline": "Desconectado",
+      "handshake": "Último handshake",
+      "direct": "Directo",
+      "relayed": "Por relay",
+      "peer": "Peer",
+      "status": "Estado",
+      "link": "Enlace",
+      "peers_one": "{{count}} peer",
+      "peers_other": "{{count}} peers"
+    },
     "weakSignal": "Señal débil",
     "zoomControls": "Controles de zoom del mapa",
     "tagDevices": "Etiquetar clientes",
@@ -1672,7 +1686,8 @@
       "wifi": "Wi-Fi",
       "vlan": "VLAN",
       "untagged": "Sin VLAN",
-      "aps": "Puntos de acceso"
+      "aps": "Puntos de acceso",
+      "vpn": "VPN"
     }
   },
   "settings": {

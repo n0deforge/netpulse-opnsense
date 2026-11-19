@@ -214,6 +214,12 @@ export interface WGPeer {
   lastHandshake: string
   rx: string
   tx: string
+  /** Tunnel interface ("wg0", "tailscale0"); absent from older servers. */
+  interface?: string
+  /** Last direct host:port; empty when never seen or relayed. */
+  endpoint?: string
+  /** Control-plane presence (Tailscale); absent for plain WireGuard. */
+  online?: boolean
 }
 
 export interface WireGuardStats {

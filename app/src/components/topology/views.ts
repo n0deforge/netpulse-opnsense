@@ -16,6 +16,7 @@ export type TopologyView =
   | { kind: 'wifi' }
   | { kind: 'vlan'; vlan: number } // 0 = devices without a known VLAN
   | { kind: 'router'; id: string }
+  | { kind: 'tunnel'; iface: string }
 
 export function viewKey(v: TopologyView): string {
   switch (v.kind) {
@@ -23,6 +24,8 @@ export function viewKey(v: TopologyView): string {
       return `vlan:${v.vlan}`
     case 'router':
       return `router:${v.id}`
+    case 'tunnel':
+      return `tunnel:${v.iface}`
     default:
       return v.kind
   }
@@ -36,6 +39,7 @@ export function parseViewKey(key: string | null | undefined): TopologyView {
     if (Number.isInteger(n) && n >= 0) return { kind: 'vlan', vlan: n }
   }
   if (key.startsWith('router:') && key.length > 7) return { kind: 'router', id: key.slice(7) }
+  if (key.startsWith('tunnel:') && key.length > 7) return { kind: 'tunnel', iface: key.slice(7) }
   return { kind: 'live' }
 }
 
@@ -64,6 +68,15 @@ export function routerTabs(routers: Router[]): Router[] {
   const gw = gatewayOf(routers)
   return routers.filter((r) => r.id !== gw?.id && r.roleBadge !== 'SW')
 }
+
+/** Tunnel interfaces that have peers, in a stable order (Tailscale last). */
+export function tunnelsOf(wireguard: WireGuardStats | undefined): string[] {
+  const set = new Set<string>()
+  for (const p of wireguard?.peers ?? []) if (p.interface) set.add(p.interface)
+  return [...set].sort((a, b) => Number(isTailscale(a)) - Number(isTailscale(b)) || a.localeCompare(b))
+}
+
+export const isTailscale = (iface: string) => iface.startsWith('tailscale')
 
 export interface ViewInput {
   routers: Router[]

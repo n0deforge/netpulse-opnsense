@@ -1644,7 +1644,23 @@
     "showLabels": "Показывать подписи",
     "subtitle": "Живой вид вашей сети",
     "tapAgainDetail": "Нажмите ещё раз, чтобы открыть подробности →",
-    "tunnel": "Туннель",
+    "tunnel": {
+      "empty": "У этого туннеля нет пиров.",
+      "mapAria": "Карта туннеля {{name}}",
+      "active": "Активен",
+      "online": "В сети, простаивает",
+      "offline": "Не в сети",
+      "handshake": "Последнее рукопожатие",
+      "direct": "Напрямую",
+      "relayed": "Через релей",
+      "peer": "Пир",
+      "status": "Статус",
+      "link": "Канал",
+      "peers_one": "{{count}} пир",
+      "peers_few": "{{count}} пира",
+      "peers_many": "{{count}} пиров",
+      "peers_other": "{{count}} пира"
+    },
     "weakSignal": "Слабый сигнал",
     "zoomControls": "Управление масштабом карты",
     "tagDevices": "Метки клиентов",
@@ -1710,7 +1726,8 @@
       "wifi": "Wi-Fi",
       "vlan": "VLAN",
       "untagged": "Без VLAN",
-      "aps": "Точки доступа"
+      "aps": "Точки доступа",
+      "vpn": "VPN"
     }
   },
   "settings": {

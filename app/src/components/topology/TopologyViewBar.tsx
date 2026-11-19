@@ -4,15 +4,16 @@
  * filtering lives in ./views.
  */
 import { useTranslation } from 'react-i18next'
-import { Cable, Layers, Radio, Router as RouterIcon, Wifi } from 'lucide-react'
-import type { Device, Router } from '@/data/mock'
-import { isWifi, isWired, routerTabs, viewKey, vlansOf, type TopologyView } from './views'
+import { Cable, Layers, Network, Radio, Router as RouterIcon, ShieldCheck, Wifi } from 'lucide-react'
+import type { Device, Router, WireGuardStats } from '@/data/mock'
+import { isTailscale, isWifi, isWired, routerTabs, tunnelsOf, viewKey, vlansOf, type TopologyView } from './views'
 
 interface Props {
   view: TopologyView
   onChange: (v: TopologyView) => void
   routers: Router[]
   devices: Device[]
+  wireguard?: WireGuardStats
   /** VLAN tag → network name reported by the gateway, when known. */
   vlanNames: Record<number, string>
 }
@@ -57,12 +58,13 @@ function Group({ label, children }: { label: string; children: React.ReactNode }
   )
 }
 
-export function TopologyViewBar({ view, onChange, routers, devices, vlanNames }: Props) {
+export function TopologyViewBar({ view, onChange, routers, devices, wireguard, vlanNames }: Props) {
   const { t } = useTranslation()
   const key = viewKey(view)
   const online = devices.filter((d) => d.online !== false)
   const vlans = vlansOf(online)
   const aps = routerTabs(routers)
+  const tunnels = tunnelsOf(wireguard)
   const icon = 'h-3.5 w-3.5'
 
   return (
@@ -126,6 +128,33 @@ export function TopologyViewBar({ view, onChange, routers, devices, vlanNames }:
                 count={online.filter((d) => d.routerId === r.id).length}
               />
             ))}
+          </Group>
+        </>
+      )}
+
+      {tunnels.length > 0 && (
+        <>
+          <span className="h-5 w-px shrink-0 bg-border" aria-hidden />
+          <Group label={t('topology.views.vpn')}>
+            {tunnels.map((iface) => {
+              const peers = (wireguard?.peers ?? []).filter((p) => p.interface === iface)
+              return (
+                <Chip
+                  key={iface}
+                  active={key === `tunnel:${iface}`}
+                  onClick={() => onChange({ kind: 'tunnel', iface })}
+                  icon={
+                    isTailscale(iface) ? (
+                      <Network className={icon} strokeWidth={1.75} />
+                    ) : (
+                      <ShieldCheck className={icon} strokeWidth={1.75} />
+                    )
+                  }
+                  label={isTailscale(iface) ? 'Tailscale' : iface}
+                  count={peers.filter((p) => p.active || p.online).length}
+                />
+              )
+            })}
           </Group>
         </>
       )}
