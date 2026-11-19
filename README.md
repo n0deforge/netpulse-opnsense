@@ -53,6 +53,7 @@ fed by the pushers in
 | **Topology views** | One live map | A view bar: live, wired, Wi-Fi, one tab per VLAN (named from the gateway networks), one per access point and one per VPN tunnel, with counts; en, es, ru, zh |
 | **Tunnel maps** | Four WireGuard peer slots on the fleet map | Each WireGuard interface and the Tailscale tailnet drawn with the fleet map: a tunnel hub off the gateway with every reachable peer in its ring (OS icons, live packet flow, draggable), plus a table with status, tunnel IP, direct or relayed, transfer |
 | **VLAN of Wi-Fi clients** | Only from the FDB of the AP, which external APs do not have | Falls back to the VLAN the gateway sees the client on, so per-VLAN views and network client lists include Wi-Fi clients |
+| **Wi-Fi link rate** | Not shown | Negotiated link rate per wireless client (↓/↑ Mbps) in the map tooltip and on the Clients page, when the AP reports it |
 | **24 h WAN total** | Assumed a full day of samples: ~24x too high on a fresh install | Uses the real sample spacing, like the per-range stats |
 
 Each change is one commit on the `opnsense` branch, independent of the others,

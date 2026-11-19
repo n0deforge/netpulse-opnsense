@@ -12,6 +12,7 @@ change can be proposed upstream on its own:
 | [24 h WAN total on a fresh install](#24-h-wan-total) | server, bug fix |
 | [Topology views](#topology-views) | web app |
 | [Tunnel views and peer details](#tunnel-views) | contract, server, web app |
+| [Wi-Fi link rate](#wi-fi-link-rate) | contract, server, web app |
 
 ## Why
 
@@ -149,6 +150,16 @@ The table adds the tunnel IP, last handshake, whether the link is direct
 peer that is online but idle is drawn as up, since it is reachable. Peers
 also expose `os`, `rxBytes` and `txBytes` in the API. Tailscale peers come
 from the OPNsense os-tailscale plugin through the OPNsense pusher.
+
+## Wi-Fi link rate
+
+`probe.WirelessClient` gains optional `txRateMbps` and `rxRateMbps`: the
+negotiated link (PHY) rate towards and from the station, as the AP reports
+it. It is not throughput. Devices carry it as `linkTxMbps`/`linkRxMbps`, the
+map tooltip of a wireless client shows "Link rate ↓ x · ↑ y Mbps" and the
+Clients page shows the downlink rate after the signal, only when known. The
+Wi-Fi controller pusher fills it from Asuswrt; an OpenWrt agent could fill it
+from `iw station dump` the same way.
 
 ## Running this fork
 

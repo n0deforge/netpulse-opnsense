@@ -53,6 +53,7 @@ OpenWrt, alimentada por los pushers de
 | **Vistas de topología** | Un solo mapa en vivo | Barra de vistas: en vivo, cable, Wi-Fi, una pestaña por VLAN (con el nombre de la red del gateway), una por punto de acceso y una por túnel VPN, con recuentos; en, es, ru, zh |
 | **Mapas de túnel** | Cuatro huecos para peers WireGuard en el mapa | Cada interfaz WireGuard y la tailnet de Tailscale con el mismo mapa: un nodo del túnel colgando del gateway con cada peer accesible en su anillo (iconos por sistema, flujo de paquetes en vivo, arrastrables), más una tabla con estado, IP del túnel, directo o por relay y tráfico |
 | **VLAN de los clientes Wi-Fi** | Solo del FDB del AP, que los AP externos no tienen | Usa la VLAN en la que el gateway ve al cliente, así las vistas por VLAN y las listas de clientes por red incluyen los Wi-Fi |
+| **Velocidad de enlace Wi-Fi** | No se muestra | Velocidad negociada de cada cliente inalámbrico (↓/↑ Mbps) en el tooltip del mapa y en Clientes, cuando el AP la da |
 | **Total WAN de 24 h** | Suponía un día completo de muestras: ~24 veces de más en una instalación nueva | Usa el intervalo real entre muestras, como las estadísticas por rango |
 
 Cada cambio es un commit independiente en la rama `opnsense`, documentado (en
