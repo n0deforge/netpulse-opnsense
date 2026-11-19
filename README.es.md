@@ -5,6 +5,16 @@
   <a href="README.es.md">Español</a>
 </p>
 
+> [!NOTE]
+> **Esto es un fork.** `n0deforge/netpulse-opnsense` sigue a
+> [gnacho/netpulse](https://github.com/gnacho/netpulse) y añade una sola cosa:
+> un gateway que no es OpenWrt (un firewall OPNsense leído por su API) puede
+> empujar sus peers WireGuard, así que el panel WireGuard, las alertas y el
+> histórico de 30 días funcionan sin SSH. El resto es NetPulse tal cual. Los
+> pushers viven en
+> [netpulse-integrations-opnsense](https://github.com/n0deforge/netpulse-integrations-opnsense).
+> Detalles (en inglés) en [docs/fork-opnsense.md](docs/fork-opnsense.md).
+
 <p align="center">
   <a href="https://netpulse.cloudless.club"><img alt="Sitio web" src="https://img.shields.io/badge/Website-netpulse.cloudless.club-blue"></a>
   <a href="https://demo.netpulse.cloudless.club"><img alt="Demo en vivo" src="https://img.shields.io/badge/Live%20demo-demo.netpulse.cloudless.club-blue"></a>
