@@ -328,7 +328,16 @@
       "noteIn": "{{host}} 上的虚拟机 · 虚拟网桥（{{port}}）· 流量走宿主机的网线"
     },
     "defaultRoute": "默认路由",
-    "vlan": "VLAN"
+    "vlan": "VLAN",
+    "views": {
+      "label": "视图",
+      "live": "实时",
+      "wired": "有线",
+      "wifi": "Wi-Fi",
+      "vlan": "VLAN",
+      "untagged": "无 VLAN",
+      "aps": "接入点"
+    }
   },
   "devices": {
     "badges": {

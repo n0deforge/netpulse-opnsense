@@ -1664,7 +1664,16 @@
       "noteIn": "Máquina virtual en {{host}} · bridge virtual ({{port}}) · tráfico por el cable del host"
     },
     "defaultRoute": "Ruta por defecto",
-    "vlan": "VLAN"
+    "vlan": "VLAN",
+    "views": {
+      "label": "Vista",
+      "live": "En vivo",
+      "wired": "Cable",
+      "wifi": "Wi-Fi",
+      "vlan": "VLAN",
+      "untagged": "Sin VLAN",
+      "aps": "Puntos de acceso"
+    }
   },
   "settings": {
     "admin": {

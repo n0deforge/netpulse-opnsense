@@ -1664,7 +1664,16 @@
       "noteIn": "Virtual machine on {{host}} · virtual bridge ({{port}}) · traffic rides the host's cable"
     },
     "defaultRoute": "Default route",
-    "vlan": "VLAN"
+    "vlan": "VLAN",
+    "views": {
+      "label": "View",
+      "live": "Live",
+      "wired": "Wired",
+      "wifi": "Wi-Fi",
+      "vlan": "VLAN",
+      "untagged": "No VLAN",
+      "aps": "Access points"
+    }
   },
   "settings": {
     "admin": {

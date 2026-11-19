@@ -16,6 +16,9 @@ import { TopologyMap } from '@/components/topology/TopologyMap'
 import type { TopologyMapApi } from '@/components/topology/TopologyMap'
 import { TopologyOverridesManager } from '@/components/topology/TopologyOverridesManager'
 import { buildTopologyModel } from '@/components/topology/model'
+import { TopologyViewBar } from '@/components/topology/TopologyViewBar'
+import { applyTopologyView, gatewayOf, parseViewKey, routerTabs, viewKey, type TopologyView } from '@/components/topology/views'
+import { fetchJson } from '@/lib/utils'
 import { useNetPulse } from '@/data/DataProvider'
 import { useAuth } from '@/data/AuthContext'
 import type { Device } from '@/data/mock'
@@ -69,11 +72,42 @@ export default function Topology() {
   const [hoverLink, setHoverLink] = useState<string | null>(null)
   const mapApi = useRef<TopologyMapApi>({})
 
+  // -- views (n0deforge fork) --------------------------------------------------
+  // Live, wired, Wi-Fi, per VLAN and per access point. The choice is a
+  // per-browser convenience; a view whose router disappeared falls back to live.
+  const VIEW_KEY = 'netpulse.topology.view'
+  const [viewRaw, setViewRaw] = useState<TopologyView>(() => {
+    try {
+      return parseViewKey(localStorage.getItem(VIEW_KEY))
+    } catch {
+      return { kind: 'live' }
+    }
+  })
+  const view: TopologyView =
+    viewRaw.kind === 'router' && !routerTabs(routers).some((r) => r.id === viewRaw.id) ? { kind: 'live' } : viewRaw
+  const gatewayId = gatewayOf(routers)?.id
+  const [vlanNames, setVlanNames] = useState<Record<number, string>>({})
+  useEffect(() => {
+    if (isDemo || !gatewayId) return
+    let alive = true
+    void fetchJson<{ networks?: { name: string; vlan?: number }[] }>(`/api/routers/${encodeURIComponent(gatewayId)}`).then((res) => {
+      if (!alive || !res.ok) return
+      const names: Record<number, string> = {}
+      for (const n of res.data.networks ?? []) if (n.vlan && n.vlan > 0 && n.name) names[n.vlan] = n.name
+      setVlanNames(names)
+    })
+    return () => {
+      alive = false
+    }
+  }, [isDemo, gatewayId])
+
   // Etiquetado manual (issue #142 Fase B): clic en un chip abre el panel de
   // overrides con esa MAC preseleccionada. Solo admin y modo live.
   const canTag = !isDemo && auth?.role === 'admin'
   // Editar layout (issue #656): solo admin y modo live, como "Etiquetar".
-  const canEdit = !isDemo && auth?.role === 'admin'
+  // Layout edits are saved per node for the whole map, so they are only
+  // offered in the live view (a narrowed view would move nodes out of place).
+  const canEdit = !isDemo && auth?.role === 'admin' && view.kind === 'live'
   const [tagSheetOpen, setTagSheetOpen] = useState(false)
   const [tagMac, setTagMac] = useState<string | undefined>(undefined)
 
@@ -97,19 +131,35 @@ export default function Topology() {
     }
   })
 
+  const scoped = useMemo(
+    () => applyTopologyView({ routers, devices, wireguard, distributionNodes: distributionNodes ?? [], topology }, view),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [routers, devices, wireguard, distributionNodes, topology, viewKey(view)],
+  )
+
+  const handleViewChange = (v: TopologyView) => {
+    setViewRaw(v)
+    setEditMode(false)
+    try {
+      localStorage.setItem(VIEW_KEY, viewKey(v))
+    } catch {
+      /* localStorage no disponible */
+    }
+  }
+
   const model = useMemo(
     () =>
       buildTopologyModel({
-        routers,
-        devices,
+        routers: scoped.routers,
+        devices: scoped.devices,
         wan,
-        wireguard,
-        distributionNodes,
-        topology,
+        wireguard: scoped.wireguard,
+        distributionNodes: scoped.distributionNodes,
+        topology: scoped.topology,
         vm,
         seedPositions: Object.keys(layout).length > 0 ? layout : undefined,
       }),
-    [routers, devices, wan, wireguard, distributionNodes, topology, vm, layout],
+    [scoped, wan, vm, layout],
   )
 
   // Durante el arrastre, onMoveNode actualiza la posición del nodo en `layout`
@@ -311,6 +361,8 @@ export default function Topology() {
           )}
         </div>
       </header>
+
+      <TopologyViewBar view={view} onChange={handleViewChange} routers={routers} devices={devices} vlanNames={vlanNames} />
 
       {/* ② Map canvas */}
       <section

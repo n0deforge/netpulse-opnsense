@@ -1702,7 +1702,16 @@
       "noteIn": "Виртуальная машина на {{host}} · виртуальный мост ({{port}}) · трафик идёт по кабелю хоста"
     },
     "defaultRoute": "Маршрут по умолчанию",
-    "vlan": "VLAN"
+    "vlan": "VLAN",
+    "views": {
+      "label": "Вид",
+      "live": "Вся сеть",
+      "wired": "Проводные",
+      "wifi": "Wi-Fi",
+      "vlan": "VLAN",
+      "untagged": "Без VLAN",
+      "aps": "Точки доступа"
+    }
   },
   "settings": {
     "admin": {
