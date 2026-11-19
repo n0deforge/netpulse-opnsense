@@ -1,9 +1,16 @@
 # Fork notes: WireGuard from external gateways
 
 This fork ([n0deforge/netpulse-opnsense](https://github.com/n0deforge/netpulse-opnsense))
-tracks [gnacho/netpulse](https://github.com/gnacho/netpulse). It carries one
-change to the ingestion contract and the server, kept small on purpose so it
-rebases cleanly and can be proposed upstream.
+tracks [gnacho/netpulse](https://github.com/gnacho/netpulse). Each change is a
+separate commit, small on purpose so the branch rebases cleanly and every
+change can be proposed upstream on its own:
+
+| Change | Area |
+|---|---|
+| [WireGuard from external gateways](#why) | ingestion contract, server |
+| [VLAN of AP clients from the gateway](#vlan-of-ap-clients) | server |
+| [24 h WAN total on a fresh install](#24-h-wan-total) | server, bug fix |
+| [Topology views](#topology-views) | web app |
 
 ## Why
 
@@ -77,6 +84,42 @@ the SSH probe unchanged.
 - An older pusher does not send it; the server uses SSH as before.
 - No database migration and no UI change.
 
+## VLAN of AP clients
+
+A device's VLAN comes from the FDB of the router it hangs off (#1757). A
+Wi-Fi client hangs off its access point, and an AP fed by an external pusher
+usually has no VLAN data, so those clients had none. When the client's own
+router has no VLAN for it, the server now checks the gateway, which routes
+the client and knows the VLAN it sees the MAC on (an OPNsense ARP interface,
+a bridge FDB on OpenWrt). The router's own evidence still wins.
+
+## 24 h WAN total
+
+`wanDayStats` estimated the 24 h total as `SUM(rx_bps) × 86400 / n`, which
+assumes the table already covers a full day. On a fresh install with an hour
+of samples that reports roughly 24 times the real traffic. It now uses the
+real spacing of the samples, the same formula `wanRangeStat` adopted in
+#2047. The existing test encoded the old assumption and was updated; a new
+test covers the fresh-install case.
+
+## Topology views
+
+The topology page gets a view bar above the map:
+
+| View | Shows |
+|---|---|
+| Live | Everything, as upstream |
+| Wired / Wi-Fi | Only cabled or only wireless clients, all APs kept |
+| One tab per VLAN | Clients on that VLAN and the routers that carry them; names come from the gateway's networks |
+| One tab per access point | That AP and its clients |
+
+A view narrows the input of `buildTopologyModel` (routers, devices, semantic
+links and rings) instead of changing the map, so geometry, animation,
+tooltips and labels behave as in the live view
+([views.ts](../app/src/components/topology/views.ts)). Layout editing stays in
+the live view because saved positions apply to the whole map. Labels exist in
+English, Spanish, Russian and Chinese.
+
 ## Running this fork
 
 The image is published to GHCR on every `n0de/v*` tag:
@@ -107,7 +150,9 @@ package and Docker workflows do not fire on this repository.
 
 ## Upstream status
 
-The change is neutral, documented and tested, which is what
-[external-integrations.md](external-integrations.md) asks of a core contract
-change. It has not been proposed upstream yet. If it is merged there, this
-fork becomes unnecessary and the stack can point back at upstream images.
+None of the changes has been proposed upstream yet. The WireGuard section is
+neutral, documented and tested, as
+[external-integrations.md](external-integrations.md) asks of a contract
+change; the VLAN fallback and the WAN total fix are independent of OPNsense
+and good candidates on their own. If they are merged there, this fork shrinks
+to whatever is left, or disappears.
