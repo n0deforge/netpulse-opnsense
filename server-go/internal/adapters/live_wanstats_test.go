@@ -64,11 +64,12 @@ func TestWanDayStats(t *testing.T) {
 	if res.avgMbps != 47.5 {
 		t.Fatalf("avgMbps=%v, esperaba 47.5", res.avgMbps)
 	}
-	// Total 24h: SUM(rx_bps)×dt/8 con dt = 86400/4 = 21600s.
-	// (20+30+90+50)e6 × 21600 / 8 = 190e6×21600/8 = 5.13e11 bytes (513 GB).
+	// Total 24h: SUM(rx_bps)×dt/8 with dt = the real sample spacing, as in
+	// wanRangeStat (#2047): 11-Ago 21:00 → 12-Ago 18:00 = 75600 s over 3
+	// intervals = 25200 s. 190e6 × 25200 / 8 = 5.985e11 bytes.
 	// #899: bytes crudos; el formateo con locale vive en el cliente.
-	if res.totalBytes != 5.13e11 {
-		t.Fatalf("totalBytes=%v, esperaba 5.13e11", res.totalBytes)
+	if res.totalBytes != 5.985e11 {
+		t.Fatalf("totalBytes=%v, esperaba 5.985e11", res.totalBytes)
 	}
 }
 
@@ -139,5 +140,21 @@ func TestLatencySpark24h(t *testing.T) {
 	}
 	if got[0] != 20 || got[1] != 12.5 || got[2] != 25 {
 		t.Fatalf("serie = %v, want [20 12.5 25] en orden temporal", got)
+	}
+}
+
+// A fresh install has an hour of samples, not a day: the total must cover
+// that hour only (it used to spread 86400 s over the samples, ~24x too much).
+func TestWanDayStatsFreshInstall(t *testing.T) {
+	d := openLiveTestDB(t)
+	l := &Live{db: d, now: fixedNow}
+	now := fixedNow()
+	for i := 0; i <= 60; i++ { // one sample a minute for the last hour, 8 Mbps
+		insertMetric(t, d, "gw", now.Add(-time.Duration(60-i)*time.Minute), 8e6)
+	}
+	res := l.wanDayStats("gw")
+	// 8 Mbps for 3600 s = 3.6e9 bytes.
+	if res.totalBytes < 3.5e9 || res.totalBytes > 3.7e9 {
+		t.Fatalf("totalBytes=%v, esperaba ~3.6e9", res.totalBytes)
 	}
 }

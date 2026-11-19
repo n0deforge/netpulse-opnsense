@@ -1257,14 +1257,20 @@ func (l *Live) wanDayStats(gwID string) wanDayStatsResult {
 
 	// Media 24h + total: AVG(rx_bps) y bytes estimados con el Δt medio.
 	row = l.db.QueryRow(
-		`SELECT AVG(rx_bps), SUM(rx_bps), COUNT(rx_bps) FROM metrics
+		`SELECT AVG(rx_bps), SUM(rx_bps), COUNT(rx_bps), MIN(ts), MAX(ts) FROM metrics
 		 WHERE router_id = ? AND ts >= ? AND rx_bps IS NOT NULL`, gwID, start24h)
 	var avg, sum sql.NullFloat64
-	var n sql.NullInt64
-	if err := row.Scan(&avg, &sum, &n); err == nil && avg.Valid && sum.Valid && n.Valid && n.Int64 > 0 {
+	var n, minTs, maxTs sql.NullInt64
+	if err := row.Scan(&avg, &sum, &n, &minTs, &maxTs); err == nil && avg.Valid && sum.Valid && n.Valid && n.Int64 > 0 {
 		out.avgMbps = math.Round(avg.Float64/1e6*10) / 10
-		dt := float64(86400) / float64(n.Int64) // s entre muestras
-		out.totalBytes = sum.Float64 * dt / 8
+		// Same interval as wanRangeStat (#2047): the real spacing of the
+		// samples, not 86400 s spread over them. The old formula assumed the
+		// table already covered a full day, so a fresh install (an hour of
+		// samples) reported roughly 24x the traffic it had moved.
+		if n.Int64 > 1 && minTs.Valid && maxTs.Valid && maxTs.Int64 > minTs.Int64 {
+			dt := float64(maxTs.Int64-minTs.Int64) / 1000 / float64(n.Int64-1)
+			out.totalBytes = sum.Float64 * dt / 8
+		}
 	}
 	return out
 }
