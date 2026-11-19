@@ -144,6 +144,9 @@ function tunnelView(input: ViewInput, iface: string): ViewInput {
     ip: p.tunnelIp,
     mac: '',
     routerId: hubId,
+    // Explicit anchor: the model hangs port-less cabled clients off the
+    // gateway unless attachTo names their hub.
+    attachTo: hubId,
     band: 'cable',
     signalDbm: null,
     trafficMbps: input.peerRates?.[peerKey(p)] ?? 0,
@@ -176,10 +179,18 @@ function deviceFilter(view: TopologyView): ((d: Device) => boolean) | null {
   }
 }
 
+/** On the fleet map a peer slot is up or down. A tailnet peer that is online
+ *  but idle (no recent handshake) is reachable, so it is drawn up; the tunnel
+ *  table keeps the exact status. Plain WireGuard peers are unchanged. */
+function displayPeers(wg: WireGuardStats): WireGuardStats {
+  if (!wg.peers.some((p) => p.online && !p.active)) return wg
+  return { ...wg, peers: wg.peers.map((p) => (p.online && !p.active ? { ...p, active: true } : p)) }
+}
+
 export function applyTopologyView(input: ViewInput, view: TopologyView): ViewInput {
   if (view.kind === 'tunnel') return tunnelView(input, view.iface)
   const keep = deviceFilter(view)
-  if (!keep) return input
+  if (!keep) return { ...input, wireguard: displayPeers(input.wireguard) }
 
   const devices = input.devices.filter(keep)
   const deviceIds = new Set(devices.map((d) => d.id))
