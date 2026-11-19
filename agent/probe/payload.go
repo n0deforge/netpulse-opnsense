@@ -115,6 +115,10 @@ type WireGuardPeer struct {
 	LastHandshake int64  `json:"lastHandshake"`
 	RxBytes       int64  `json:"rxBytes"`
 	TxBytes       int64  `json:"txBytes"`
+	// Online: reachability reported by a control plane, when there is one
+	// (Tailscale). nil for plain WireGuard, which only knows handshakes. A
+	// peer can be online and idle: no recent handshake, still reachable.
+	Online *bool `json:"online,omitempty"`
 }
 
 // MQTTData: exposición propia del equipo a Home Assistant por MQTT (#832).

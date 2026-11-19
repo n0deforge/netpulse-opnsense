@@ -28,11 +28,21 @@ func TestWireGuardStatsFromPayload(t *testing.T) {
 	if p := s.Peers[0]; p.Name != "phone" || !p.Active || p.TunnelIP != "10.9.0.2" || p.RxBytes != 2048 || p.Key == "" {
 		t.Fatalf("peer0 = %+v", p)
 	}
+	if s.Peers[0].Interface != "wg0" || s.Peers[0].Online != nil {
+		t.Fatalf("peer0 interface/online = %q/%v", s.Peers[0].Interface, s.Peers[0].Online)
+	}
 	if p := s.Peers[1]; p.Active || p.Name != "10.9.0.3" {
 		t.Fatalf("peer1 = %+v", p)
 	}
 	if s.Transfer == nil {
 		t.Fatal("transfer missing")
+	}
+	on := true
+	ts := WireGuardStatsFromPayload(&probe.WireGuardData{Interfaces: []string{"tailscale0"}, Peers: []probe.WireGuardPeer{
+		{Interface: "tailscale0", PublicKey: "nodekey:abcd", Name: "laptop", AllowedIPs: "100.64.0.2/32", Endpoint: "192.0.2.10:41641", Online: &on},
+	}}, map[string]WGPeerName{}, map[string]bool{}, now)
+	if p := ts.Peers[0]; p.Interface != "tailscale0" || p.Online == nil || !*p.Online || p.Active || p.Endpoint != "192.0.2.10:41641" {
+		t.Fatalf("tailscale peer = %+v", p)
 	}
 	empty := WireGuardStatsFromPayload(&probe.WireGuardData{}, nil, nil, now)
 	if empty.Status != "inactive" {

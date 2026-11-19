@@ -161,6 +161,13 @@ type WGPeer struct {
 	// Urgent (#1441): el peer merece notificación cuando se cae (túnel
 	// site-to-site, servidor). Un portátil o un móvil que entra y sale no.
 	Urgent bool `json:"urgent"`
+	// Interface the peer belongs to ("wg0", "tailscale0"), so the app can
+	// draw one map per tunnel. Endpoint is the last direct host:port (empty
+	// = never seen, or relayed). Online is control-plane presence, only for
+	// sources that have one (Tailscale); nil otherwise.
+	Interface string `json:"interface,omitempty"`
+	Endpoint  string `json:"endpoint,omitempty"`
+	Online    *bool  `json:"online,omitempty"`
 }
 
 // WireGuardStats (quirk: Status siempre "active" si `wg show` respondió).

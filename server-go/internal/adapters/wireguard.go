@@ -365,8 +365,13 @@ func buildWGPeer(p WGDumpPeer, peerNames map[string]WGPeerName, descs map[string
 		lastHandshake = relTime(p.HandshakeSec, nowSec)
 	}
 	key := WGPeerKey(p.Pubkey)
+	endpoint := ""
+	if p.Endpoint != nil {
+		endpoint = *p.Endpoint
+	}
 	return WGPeer{
-		ID: id, Key: key, Name: name, Type: typ, TunnelIP: tunnelIP,
+		Endpoint: endpoint,
+		ID:       id, Key: key, Name: name, Type: typ, TunnelIP: tunnelIP,
 		Active: active, LastHandshake: lastHandshake,
 		Rx: fmtBytes(float64(p.RxBytes)), Tx: fmtBytes(float64(p.TxBytes)),
 		RxBytes: p.RxBytes, TxBytes: p.TxBytes,
@@ -433,7 +438,9 @@ func GetWireGuardStats(pool sshRunner, host, iface, subnet string, peerNames map
 			descs[k] = v
 		}
 		for _, p := range ParseWGDump(dump) {
-			stats.Peers = append(stats.Peers, buildWGPeer(p, peerNames, descs, nowSec, idx, urgent))
+			peer := buildWGPeer(p, peerNames, descs, nowSec, idx, urgent)
+			peer.Interface = ifc
+			stats.Peers = append(stats.Peers, peer)
 			// #2017: el total del túnel es la suma de los contadores por peer
 			// (todas las interfaces), que es el único dato real que expone
 			// WireGuard. Los contadores de la interfaz en /proc/net/dev no se
