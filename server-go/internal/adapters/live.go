@@ -4111,6 +4111,18 @@ func (l *Live) buildDevices(polled map[string]*routerPolled, wanPort string) []D
 			if v := p.fdbVlans[strings.ToUpper(devices[i].MAC)]; v > 0 {
 				devices[i].Vlan = v
 				devices[i].VlanKnown = true
+				continue
+			}
+		}
+		// A client attached to an AP that does not report VLANs (an external
+		// AP, a dumb bridge) is still routed by the gateway, which knows the
+		// VLAN it sees the MAC on (an OPNsense ARP interface, a bridge FDB).
+		if gwID != "" && gwID != devices[i].RouterID {
+			if p := polled[gwID]; p != nil {
+				if v := p.fdbVlans[strings.ToUpper(devices[i].MAC)]; v > 0 {
+					devices[i].Vlan = v
+					devices[i].VlanKnown = true
+				}
 			}
 		}
 	}
