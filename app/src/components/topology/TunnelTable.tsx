@@ -5,6 +5,7 @@
  * idle (Tailscale control plane), "offline" otherwise.
  */
 import { useTranslation } from 'react-i18next'
+import { relTime } from '@/i18n'
 import type { WGPeer } from '@/data/mock'
 import { isTailscale } from './views'
 
@@ -68,7 +69,7 @@ export function TunnelTable({ iface, peers }: { iface: string; peers: WGPeer[] }
                       {t(`topology.tunnel.${st}`)}
                     </span>
                   </td>
-                  <td className="px-4 py-2 text-text-secondary">{p.lastHandshake}</td>
+                  <td className="px-4 py-2 text-text-secondary">{relTime(p.lastHandshake)}</td>
                   <td className="px-4 py-2 text-text-secondary">
                     <span title={p.endpoint || undefined}>{linkText(t, iface, p, false)}</span>
                   </td>
