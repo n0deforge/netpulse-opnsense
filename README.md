@@ -6,23 +6,10 @@
 </p>
 
 > [!NOTE]
-> **This is a fork.** `n0deforge/netpulse-opnsense` follows
-> [gnacho/netpulse](https://github.com/gnacho/netpulse) and adds a few small,
-> separate changes for networks with an OPNsense gateway:
->
-> - **WireGuard from external gateways**: a gateway read through its API
->   (OPNsense) can push its peers, so the WireGuard panel, alerts and 30-day
->   history work without SSH.
-> - **Topology views**: live, wired, Wi-Fi, one tab per VLAN and one per
->   access point.
-> - **VLAN of Wi-Fi clients** taken from the gateway when the AP has none.
-> - **Fix**: the 24 h WAN total no longer reports ~24x the traffic on a fresh
->   install.
->
-> Everything else is upstream NetPulse. Image:
-> `ghcr.io/n0deforge/netpulse-opnsense`. The pushers that feed it live in
-> [netpulse-integrations-opnsense](https://github.com/n0deforge/netpulse-integrations-opnsense).
-> Details in [docs/fork-opnsense.md](docs/fork-opnsense.md).
+> **This is a fork** of [gnacho/netpulse](https://github.com/gnacho/netpulse)
+> for networks whose gateway is an **OPNsense firewall**. See
+> [This fork](#this-fork-opnsense-gateways) for what it adds; the rest of this
+> README is upstream's.
 
 <p align="center">
   <a href="https://netpulse.cloudless.club"><img alt="Website" src="https://img.shields.io/badge/Website-netpulse.cloudless.club-blue"></a>
@@ -50,6 +37,37 @@
     <img alt="NetPulse overview with a network health score, live traffic chart, AdGuard Home stats, WireGuard peers and the alerts feed" src="assets/hero-en-light.png" width="800">
   </picture>
 </p>
+
+## This fork: OPNsense gateways
+
+NetPulse reads routers over SSH with OpenWrt commands or through its own
+agent. An OPNsense gateway supports neither, so several parts of the dashboard
+stay empty or wrong on such a network. This fork changes the server and the
+web app so that an OPNsense network gets the same treatment as an OpenWrt one,
+fed by the pushers in
+[netpulse-integrations-opnsense](https://github.com/n0deforge/netpulse-integrations-opnsense).
+
+| Change | Upstream | This fork |
+|---|---|---|
+| **WireGuard** | Peers only from an OpenWrt gateway over SSH | A gateway read through its API can push its peers in a new `wireguard` payload section; naming, urgent peers, connect/disconnect alerts and the 30-day history work unchanged |
+| **Topology views** | One live map | A view bar: live, wired, Wi-Fi, one tab per VLAN (named from the gateway networks) and one per access point, with device counts; en, es, ru, zh |
+| **VLAN of Wi-Fi clients** | Only from the FDB of the AP, which external APs do not have | Falls back to the VLAN the gateway sees the client on, so per-VLAN views and network client lists include Wi-Fi clients |
+| **24 h WAN total** | Assumed a full day of samples: ~24x too high on a fresh install | Uses the real sample spacing, like the per-range stats |
+
+Each change is one commit on the `opnsense` branch, independent of the others,
+documented in [docs/fork-opnsense.md](docs/fork-opnsense.md) with its tests.
+Compatibility goes both ways: an upstream server ignores the new payload
+section and an upstream pusher simply does not send it.
+
+```sh
+docker pull ghcr.io/n0deforge/netpulse-opnsense:latest
+```
+
+The complete stack (this server, the OPNsense pusher and a Wi-Fi controller
+pusher) runs from one compose file:
+[deploy/docker](https://github.com/n0deforge/netpulse-integrations-opnsense/tree/opnsense/deploy/docker).
+Validated on OPNsense 26.1.11 with six VLANs, PPPoE WAN, dnsmasq DHCP and a
+WireGuard tunnel. Releases: [n0de/v*](https://github.com/n0deforge/netpulse-opnsense/releases).
 
 ## See it before you install it
 
