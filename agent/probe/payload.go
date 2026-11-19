@@ -119,6 +119,9 @@ type WireGuardPeer struct {
 	// (Tailscale). nil for plain WireGuard, which only knows handshakes. A
 	// peer can be online and idle: no recent handshake, still reachable.
 	Online *bool `json:"online,omitempty"`
+	// OS the peer reports, when the source knows it (Tailscale: "macOS",
+	// "linux", "iOS"...). Lets the app pick a device icon.
+	OS string `json:"os,omitempty"`
 }
 
 // MQTTData: exposición propia del equipo a Home Assistant por MQTT (#832).

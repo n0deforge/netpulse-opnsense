@@ -153,11 +153,11 @@ type WGPeer struct {
 	LastHandshake string `json:"lastHandshake"`
 	Rx            string `json:"rx"`
 	Tx            string `json:"tx"`
-	// RxBytes/TxBytes: los mismos contadores sin formatear (#2019). No van al
-	// contrato JSON; existen para que el poller pueda persistir la serie por
-	// peer y calcular la ventana de 30 días.
-	RxBytes int64 `json:"-"`
-	TxBytes int64 `json:"-"`
+	// RxBytes/TxBytes: los mismos contadores sin formatear (#2019), para la
+	// serie por peer y la ventana de 30 días. Fork: también van en el JSON
+	// para que la app calcule la tasa de cada peer en el mapa de túneles.
+	RxBytes int64 `json:"rxBytes,omitempty"`
+	TxBytes int64 `json:"txBytes,omitempty"`
 	// Urgent (#1441): el peer merece notificación cuando se cae (túnel
 	// site-to-site, servidor). Un portátil o un móvil que entra y sale no.
 	Urgent bool `json:"urgent"`
@@ -168,6 +168,7 @@ type WGPeer struct {
 	Interface string `json:"interface,omitempty"`
 	Endpoint  string `json:"endpoint,omitempty"`
 	Online    *bool  `json:"online,omitempty"`
+	OS        string `json:"os,omitempty"`
 }
 
 // WireGuardStats (quirk: Status siempre "active" si `wg show` respondió).

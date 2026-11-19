@@ -43,6 +43,7 @@ func WireGuardStatsFromPayload(wg *probe.WireGuardData, peerNames map[string]WGP
 		peer := buildWGPeer(d, peerNames, descs, nowSec, i+1, urgent)
 		peer.Interface = p.Interface
 		peer.Online = p.Online
+		peer.OS = p.OS
 		stats.Peers = append(stats.Peers, peer)
 		sumRx += p.RxBytes
 		sumTx += p.TxBytes
