@@ -11,6 +11,7 @@ change can be proposed upstream on its own:
 | [VLAN of AP clients from the gateway](#vlan-of-ap-clients) | server |
 | [24 h WAN total on a fresh install](#24-h-wan-total) | server, bug fix |
 | [Topology views](#topology-views) | web app |
+| [Tunnel views and peer details](#tunnel-views) | contract, server, web app |
 
 ## Why
 
@@ -57,6 +58,7 @@ receive it.
 | `allowedIps` | Comma separated, the first entry is used as the tunnel IP |
 | `lastHandshake` | Unix seconds, `0` = never |
 | `rxBytes` / `txBytes` | Cumulative bytes, as in `wg show dump` |
+| `online` | Optional. Reachability reported by a control plane (Tailscale); omitted for plain WireGuard |
 
 Absence and emptiness keep the usual meaning: a missing section means the
 pusher did not report WireGuard, so the server falls back to its SSH probe. A
@@ -119,6 +121,29 @@ tooltips and labels behave as in the live view
 ([views.ts](../app/src/components/topology/views.ts)). Layout editing stays in
 the live view because saved positions apply to the whole map. Labels exist in
 English, Spanish, Russian and Chinese.
+
+## Tunnel views
+
+Each WireGuard peer the server returns now carries three optional fields:
+`interface` (`wg0`, `tailscale0`), `endpoint` (last direct `host:port`) and
+`online` (control-plane presence, from the payload field above). The SSH
+probe fills `interface` and `endpoint` too, so OpenWrt gateways benefit.
+
+The view bar uses them for a **VPN** group with one tab per tunnel
+interface; `tailscale0` is labelled Tailscale. A tunnel tab replaces the
+fleet map with a hub-and-spoke map of every peer around the gateway, plus a
+peer table, because the live map only has four peer slots and a tailnet
+usually has more devices. Each peer is shown as:
+
+| Status | Meaning |
+|---|---|
+| Active | Handshake within the last few minutes: traffic is flowing |
+| Online, idle | Reachable according to the control plane, no recent traffic (Tailscale) |
+| Offline | Neither |
+
+The table adds the tunnel IP, last handshake, whether the link is direct
+(with its endpoint) or relayed, and transfer. Tailscale peers come from the
+OPNsense os-tailscale plugin through the OPNsense pusher.
 
 ## Running this fork
 

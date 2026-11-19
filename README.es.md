@@ -49,8 +49,9 @@ OpenWrt, alimentada por los pushers de
 
 | Cambio | Original | Este fork |
 |---|---|---|
-| **WireGuard** | Peers solo de un gateway OpenWrt por SSH | Un gateway leído por su API puede empujar sus peers en una sección nueva `wireguard` del payload; nombres, peers urgentes, alertas de conexión y el histórico de 30 días funcionan igual |
-| **Vistas de topología** | Un solo mapa en vivo | Barra de vistas: en vivo, cable, Wi-Fi, una pestaña por VLAN (con el nombre de la red del gateway) y una por punto de acceso, con recuentos; en, es, ru, zh |
+| **WireGuard y Tailscale** | Peers solo de un gateway OpenWrt por SSH | Un gateway leído por su API puede empujar sus peers, incluidos los equipos de una tailnet de Tailscale, en una sección nueva `wireguard` del payload; nombres, peers urgentes, alertas de conexión y el histórico de 30 días funcionan igual |
+| **Vistas de topología** | Un solo mapa en vivo | Barra de vistas: en vivo, cable, Wi-Fi, una pestaña por VLAN (con el nombre de la red del gateway), una por punto de acceso y una por túnel VPN, con recuentos; en, es, ru, zh |
+| **Mapas de túnel** | Cuatro huecos para peers WireGuard en el mapa | Un mapa y una tabla por interfaz de túnel (cada interfaz WireGuard, una tailnet de Tailscale) con todos los peers: activo, en línea sin tráfico o desconectado, IP del túnel, directo o por relay, tráfico |
 | **VLAN de los clientes Wi-Fi** | Solo del FDB del AP, que los AP externos no tienen | Usa la VLAN en la que el gateway ve al cliente, así las vistas por VLAN y las listas de clientes por red incluyen los Wi-Fi |
 | **Total WAN de 24 h** | Suponía un día completo de muestras: ~24 veces de más en una instalación nueva | Usa el intervalo real entre muestras, como las estadísticas por rango |
 
